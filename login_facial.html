@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Escola Infantil Futuro</title>
+
+    <!-- Link para o arquivo CSS externo -->
+    <link rel="stylesheet" href="login.css">
+
+    <!-- Google Fonts: Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="container-login">
+        <div class="card-login">
+            <h1 class="titulo">Login Facial</h1>
+            <p class="subtitulo">Posicione seu rosto na câmera para entrar.</p>
+
+            <div class="container-video">
+                <video id="webcam" autoplay playsinline muted></video>
+                <div id="overlay-feedback"></div>
+            </div>
+
+            <div id="area-mensagem">Carregando...</div>
+        </div>
+    </div>
+
+    <!-- Biblioteca face-api.js -->
+    <script src="face-api.min.js"></script>
+
+    <script type="module">
+        // Importações do Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+      // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+        apiKey: "AIzaSyC4zPjmPTdPzljTObWh11F3P2pqTBz8wjQ",
+        authDomain: "escolia.firebaseapp.com",
+        projectId: "escolia",
+        storageBucket: "escolia.firebasestorage.app",
+        messagingSenderId: "31543189526",
+        appId: "1:31543189526:web:04716a986a3625cbfb5537",
+        measurementId: "G-VPQLEY7XBM"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+
+        // --- Elementos do DOM ---
+        const videoWebcam = document.getElementById('webcam');
+        const areaMensagem = document.getElementById('area-mensagem');
+        const overlayFeedback = document.getElementById('overlay-feedback');
+
+        /**
+         * Carrega os modelos da face-api.js
+         */
+        async function carregarModelosFaceAPI() {
+            const URL_MODELOS = './models';
+            areaMensagem.textContent = 'Carregando inteligência artificial...';
+            await Promise.all([
+                faceapi.nets.tinyFaceDetector.loadFromUri(URL_MODELOS),
+                faceapi.nets.faceLandmark68Net.loadFromUri(URL_MODELOS),
+                faceapi.nets.faceRecognitionNet.loadFromUri(URL_MODELOS)
+            ]);
+        }
+
+        /**
+         * Busca no Firestore os descritores faciais dos usuários aprovados.
+         */
+        async function carregarDescritoresAprovados() {
+            areaMensagem.textContent = 'Buscando usuários aprovados...';
+            const usuariosRef = collection(db, "usuarios");
+            const q = query(usuariosRef, where("status", "==", "ativo"));
+            
+            const querySnapshot = await getDocs(q);
+            if (querySnapshot.empty) {
+                console.log("Nenhum usuário ativo encontrado.");
+                return null;
+            }
+
+            const descritoresRotulados = [];
+            querySnapshot.forEach(doc => {
+                const dados = doc.data();
+                // O descritor precisa ser convertido de volta para Float32Array
+                const descritor = new Float32Array(dados.descritorFacial);
+                descritoresRotulados.push(new faceapi.LabeledFaceDescriptors(dados.nomeCompleto, [descritor]));
+            });
+            
+            return descritoresRotulados;
+        }
+
+        /**
+         * Inicia a webcam e o processo de reconhecimento.
+         */
+        async function iniciarReconhecimento() {
+            await carregarModelosFaceAPI();
+            const descritoresRotulados = await carregarDescritoresAprovados();
+
+            if (!descritoresRotulados) {
+                areaMensagem.textContent = "Nenhum usuário aprovado para login.";
+                return;
+            }
+
+            const faceMatcher = new faceapi.FaceMatcher(descritoresRotulados, 0.6); // 0.6 é a distância/tolerância
+
+            areaMensagem.textContent = "Iniciando câmera...";
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                videoWebcam.srcObject = stream;
+            } catch (err) {
+                console.error("Erro ao acessar a webcam", err);
+                areaMensagem.textContent = "Erro ao acessar a câmera.";
+                return;
+            }
+
+            videoWebcam.addEventListener('play', () => {
+                areaMensagem.textContent = "Posicione seu rosto na câmera.";
+                setInterval(async () => {
+                    const deteccoes = await faceapi.detectAllFaces(videoWebcam, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptors();
+                    
+                    if (deteccoes.length > 0) {
+                        const resultado = faceMatcher.findBestMatch(deteccoes[0].descriptor);
+                        
+                        if (resultado.label !== 'unknown') {
+                            loginSucesso(resultado.label);
+                        } else {
+                            loginFalhou();
+                        }
+                    }
+                }, 1000); // Verifica a cada segundo
+            });
+        }
+
+        let loginRealizado = false;
+        function loginSucesso(nomeUsuario) {
+            if (loginRealizado) return; // Evita múltiplos redirecionamentos
+            loginRealizado = true;
+
+            overlayFeedback.classList.add('sucesso');
+            areaMensagem.textContent = `Bem-vindo(a), ${nomeUsuario}!`;
+
+            setTimeout(() => {
+                // window.location.href = "/portal-aluno.html"; // Descomente para redirecionar
+                console.log(`Redirecionando para o portal do usuário: ${nomeUsuario}`);
+                alert(`Login como ${nomeUsuario} realizado com sucesso!`);
+            }, 1500);
+        }
+        
+        function loginFalhou() {
+            overlayFeedback.classList.remove('sucesso');
+        }
+
+        // --- Inicialização ---
+        iniciarReconhecimento();
+    </script>
+</body>
+</html>

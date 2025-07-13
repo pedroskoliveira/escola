@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Administrador - Escola Futuro</title>
+    
+    <!-- Link para o arquivo CSS externo -->
+    <link rel="stylesheet" href="dashboard.css">
+    
+    <!-- Google Fonts: Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Ícones (Ionicons) -->
+    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+</head>
+<body>
+
+    <div class="container-principal">
+        <!-- Barra Lateral -->
+        <div class="barra-lateral">
+            <div class="barra-lateral-header">
+                <h1>Escola Futuro</h1>
+            </div>
+            <ul class="lista-menu">
+                <li class="item-menu">
+                    <a href="#">
+                        <span class="item-menu-icone"><ion-icon name="home-outline"></ion-icon></span>
+                        <span class="item-menu-texto">Visão Geral</span>
+                    </a>
+                </li>
+                <li class="item-menu item-menu-ativo">
+                    <a href="#">
+                        <span class="item-menu-icone"><ion-icon name="person-add-outline"></ion-icon></span>
+                        <span class="item-menu-texto">Matrículas</span>
+                        <span id="contador-pendentes"></span>
+                    </a>
+                </li>
+                <li class="item-menu">
+                    <a href="#">
+                        <span class="item-menu-icone"><ion-icon name="game-controller-outline"></ion-icon></span>
+                        <span class="item-menu-texto">Gamificação</span>
+                    </a>
+                </li>
+                <li class="item-menu">
+                    <a href="#">
+                        <span class="item-menu-icone"><ion-icon name="chatbubbles-outline"></ion-icon></span>
+                        <span class="item-menu-texto">Chatbots</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <span class="item-menu-icone"><ion-icon name="log-out-outline"></ion-icon></span>
+                        <span class="item-menu-texto">Sair</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Conteúdo Principal -->
+        <div class="conteudo-principal">
+            <div class="header-principal">
+                <h2>Aprovação de Matrículas</h2>
+                <div class="avatar-admin">
+                    <span>Admin</span>
+                    <img src="https://placehold.co/100x100/facc15/334155?text=A" alt="Avatar do Admin">
+                </div>
+            </div>
+
+            <div class="container-conteudo">
+                <!-- Card de Matrículas -->
+                <div class="card">
+                    <h3>Cadastros Pendentes de Aprovação</h3>
+                    <div class="tabela-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nome Completo</th>
+                                    <th>CPF</th>
+                                    <th>Data de Cadastro</th>
+                                    <th>Perfil</th>
+                                    <th class="text-center">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabela-matriculas">
+                                <!-- Linhas serão inseridas aqui pelo JavaScript -->
+                            </tbody>
+                        </table>
+                        <p id="mensagem-sem-pendencias" class="text-center">Nenhum cadastro pendente no momento. 🎉</p>
+                    </div>
+                </div>
+
+                <!-- Card de Gamificação -->
+                <div class="card">
+                    <h3>Gerenciar Desafios de Gamificação</h3>
+                    <div class="container-gamificacao">
+                        <div class="form-desafio">
+                            <h4>Criar Novo Desafio</h4>
+                            <form id="form-novo-desafio">
+                                <input type="text" id="titulo-desafio" placeholder="Título do desafio" required>
+                                <textarea id="descricao-desafio" placeholder="Descrição do desafio" rows="3" required></textarea>
+                                <input type="number" id="pontos-desafio" placeholder="Pontos" required>
+                                <input type="text" id="icone-medalha" placeholder="Ícone da Medalha (ex: 🏆)" maxlength="2" required>
+                                <button type="submit" class="btn-acao btn-criar">Criar Desafio</button>
+                            </form>
+                        </div>
+                        <div class="lista-desafios">
+                            <h4>Desafios Ativos</h4>
+                            <ul id="lista-desafios-ativos">
+                                <!-- Desafios serão inseridos aqui -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script de Lógica Principal -->
+    <script type="module">
+        // Importações do Firebase SDK
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, query, where, doc, updateDoc, onSnapshot, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Objeto de configuração do Firebase
+       // Import the functions you need from the SDKs you need
+        import { initializeApp } from "firebase/app";
+        import { getAnalytics } from "firebase/analytics";
+
+        const firebaseConfig = {
+        apiKey: "AIzaSyC4zPjmPTdPzljTObWh11F3P2pqTBz8wjQ",
+        authDomain: "escolia.firebaseapp.com",
+        projectId: "escolia",
+        storageBucket: "escolia.firebasestorage.app",
+        messagingSenderId: "31543189526",
+        appId: "1:31543189526:web:04716a986a3625cbfb5537",
+        measurementId: "G-VPQLEY7XBM"
+        };
+
+ // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+
+        // --- LÓGICA DE MATRÍCULAS ---
+        const elementoTabela = document.getElementById('tabela-matriculas');
+        const elementoContador = document.getElementById('contador-pendentes');
+        const elementoMensagemVazia = document.getElementById('mensagem-sem-pendencias');
+        let listaDeCadastrosPendentes = [];
+
+        function formatarData(dataISO) {
+            const data = new Date(dataISO);
+            return data.toLocaleDateString('pt-BR');
+        }
+
+        function desenharTabela() {
+            elementoTabela.innerHTML = '';
+            elementoMensagemVazia.classList.toggle('hidden', listaDeCadastrosPendentes.length > 0);
+            listaDeCadastrosPendentes.forEach(cadastro => {
+                const linha = document.createElement('tr');
+                linha.id = `linha-${cadastro.id}`;
+                linha.innerHTML = `
+                    <td class="nome-principal">${cadastro.nomeCompleto}</td>
+                    <td>${cadastro.cpf}</td>
+                    <td>${formatarData(cadastro.criadoEm)}</td>
+                    <td class="capitalize">${cadastro.perfil}</td>
+                    <td class="text-center">
+                        <button data-id="${cadastro.id}" class="btn-acao btn-aprovar">Aprovar</button>
+                        <button data-id="${cadastro.id}" class="btn-acao btn-rejeitar">Rejeitar</button>
+                    </td>
+                `;
+                elementoTabela.appendChild(linha);
+            });
+            atualizarContador();
+        }
+
+        function atualizarContador() {
+            const total = listaDeCadastrosPendentes.length;
+            elementoContador.textContent = total;
+            elementoContador.classList.toggle('hidden', total === 0);
+        }
+
+        async function aprovarMatricula(id) {
+            const docRef = doc(db, "usuarios", id);
+            await updateDoc(docRef, { status: "ativo" });
+        }
+
+        async function rejeitarMatricula(id) {
+            const docRef = doc(db, "usuarios", id);
+            await updateDoc(docRef, { status: "rejeitado" });
+        }
+
+        elementoTabela.addEventListener('click', (evento) => {
+            const alvo = evento.target;
+            if (alvo.classList.contains('btn-acao')) {
+                const id = alvo.dataset.id;
+                if (alvo.classList.contains('btn-aprovar')) aprovarMatricula(id);
+                else if (alvo.classList.contains('btn-rejeitar')) rejeitarMatricula(id);
+            }
+        });
+
+        const queryMatriculas = query(collection(db, "usuarios"), where("status", "==", "pending"));
+        onSnapshot(queryMatriculas, (snapshot) => {
+            listaDeCadastrosPendentes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            desenharTabela();
+        });
+
+        // --- LÓGICA DE GAMIFICAÇÃO ---
+        const formNovoDesafio = document.getElementById('form-novo-desafio');
+        const listaDesafiosAtivos = document.getElementById('lista-desafios-ativos');
+
+        formNovoDesafio.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const novoDesafio = {
+                titulo: document.getElementById('titulo-desafio').value,
+                descricao: document.getElementById('descricao-desafio').value,
+                pontos: parseInt(document.getElementById('pontos-desafio').value),
+                iconeMedalha: document.getElementById('icone-medalha').value,
+                criadoEm: new Date().toISOString(),
+                ativo: true
+            };
+            
+            try {
+                await addDoc(collection(db, "desafios"), novoDesafio);
+                formNovoDesafio.reset();
+            } catch (error) {
+                console.error("Erro ao adicionar desafio: ", error);
+                alert("Não foi possível criar o desafio.");
+            }
+        });
+
+        const queryDesafios = query(collection(db, "desafios"), where("ativo", "==", true));
+        onSnapshot(queryDesafios, (snapshot) => {
+            listaDesafiosAtivos.innerHTML = '';
+            if (snapshot.empty) {
+                listaDesafiosAtivos.innerHTML = '<li>Nenhum desafio ativo.</li>';
+                return;
+            }
+            snapshot.forEach(doc => {
+                const desafio = doc.data();
+                const item = document.createElement('li');
+                item.innerHTML = `
+                    <span class="icone-desafio">${desafio.iconeMedalha}</span>
+                    <div class="info-desafio">
+                        <strong>${desafio.titulo}</strong>
+                        <p>${desafio.pontos} pontos</p>
+                    </div>
+                `;
+                listaDesafiosAtivos.appendChild(item);
+            });
+        });
+
+    </script>
+</body>
+</html>

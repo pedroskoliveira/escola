@@ -1,0 +1,183 @@
+/* --- Reset Básico e Estilos Globais --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f3f4f6;
+    color: #374151;
+}
+
+/* --- Header --- */
+.header-principal {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 2rem;
+    height: 4.5rem;
+    background-color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.logo h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #f59e0b;
+}
+
+.info-usuario {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.info-usuario span {
+    font-weight: 500;
+}
+
+.info-usuario img {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.btn-sair {
+    background-color: #f59e0b;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.btn-sair:hover {
+    background-color: #d97706;
+}
+
+/* --- Container Principal --- */
+.container-principal {
+    display: flex;
+    flex-direction: column;
+    padding: 2rem;
+    gap: 2rem;
+}
+
+/* --- Colunas e Cards --- */
+.coluna-gamificacao {
+    width: 100%;
+}
+
+.coluna-mural {
+    width: 100%;
+}
+
+.card {
+    background-color: #ffffff;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05);
+    margin-bottom: 2rem;
+}
+
+.titulo-card {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid #f59e0b;
+    padding-bottom: 0.5rem;
+}
+
+/* --- Gamificação --- */
+.container-pontos {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #f59e0b;
+}
+
+.container-pontos ion-icon {
+    font-size: 4rem;
+}
+
+.container-pontos span {
+    font-size: 3rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.container-pontos p {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #6b7280;
+}
+
+.galeria-medalhas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.medalha {
+    font-size: 3rem;
+    padding: 0.5rem;
+    background-color: #f3f4f6;
+    border-radius: 0.5rem;
+    cursor: help;
+}
+
+/* --- Mural de Recados --- */
+.mural-recados {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.item-recado {
+    border: 1px solid #e5e7eb;
+    padding: 1rem;
+    border-radius: 0.5rem;
+}
+
+.item-recado h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 0.5rem;
+}
+
+.item-recado p {
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+.item-recado .data-recado {
+    font-size: 0.8rem;
+    color: #9ca3af;
+    text-align: right;
+    display: block;
+}
+
+/* --- Responsividade --- */
+@media (min-width: 768px) {
+    .container-principal {
+        flex-direction: row;
+        align-items: flex-start;
+    }
+
+    .coluna-gamificacao {
+        width: 30%;
+        max-width: 350px;
+    }
+
+    .coluna-mural {
+        flex: 1;
+    }
+}

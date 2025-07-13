@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal do Aluno - Escola Futuro</title>
+
+    <!-- Link para o arquivo CSS externo -->
+    <link rel="stylesheet" href="portal.css">
+
+    <!-- Google Fonts: Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Ícones (Ionicons) -->
+    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+</head>
+<body>
+
+    <header class="header-principal">
+        <div class="logo">
+            <h1>Escola Futuro</h1>
+        </div>
+        <div class="info-usuario">
+            <span id="nome-usuario">Carregando...</span>
+            <img id="avatar-usuario" src="https://placehold.co/100x100/fef08a/422006?text=?" alt="Avatar do Aluno">
+            <button class="btn-sair">Sair</button>
+        </div>
+    </header>
+
+    <main class="container-principal">
+        
+        <!-- Coluna da Gamificação -->
+        <aside class="coluna-gamificacao">
+            <div class="card">
+                <h2 class="titulo-card">Meu Progresso</h2>
+                <div class="container-pontos">
+                    <ion-icon name="star"></ion-icon>
+                    <span id="pontos-usuario">0</span>
+                    <p>Pontos</p>
+                </div>
+            </div>
+            <div class="card">
+                <h2 class="titulo-card">Minhas Medalhas</h2>
+                <div id="galeria-medalhas" class="galeria-medalhas">
+                    <!-- Medalhas serão inseridas aqui dinamicamente -->
+                </div>
+            </div>
+        </aside>
+
+        <!-- Coluna Principal (Mural) -->
+        <section class="coluna-mural">
+            <div class="card">
+                <h2 class="titulo-card">Mural de Recados</h2>
+                <div id="mural-recados" class="mural-recados">
+                    <!-- Recados serão inseridos aqui dinamicamente -->
+                    <p>Carregando recados...</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script type="module">
+        // Importações do Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, collection, query, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Objeto de configuração do Firebase
+     // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+        apiKey: "AIzaSyC4zPjmPTdPzljTObWh11F3P2pqTBz8wjQ",
+        authDomain: "escolia.firebaseapp.com",
+        projectId: "escolia",
+        storageBucket: "escolia.firebasestorage.app",
+        messagingSenderId: "31543189526",
+        appId: "1:31543189526:web:04716a986a3625cbfb5537",
+        measurementId: "G-VPQLEY7XBM"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+
+        /**
+         * Pega o ID do usuário logado.
+         * Em um app real, o ID viria da página de login (ex: sessionStorage).
+         * Para este teste, vamos simular que o usuário "Ana Júlia" fez login.
+         * Você precisa pegar um ID real de um usuário 'ativo' no seu Firestore.
+         */
+        function obterIdUsuarioLogado() {
+            // return sessionStorage.getItem('usuarioLogadoId'); // Jeito correto
+            return "ID_DE_UM_USUARIO_ATIVO_NO_SEU_FIREBASE"; // MODO DE TESTE
+        }
+
+        /**
+         * Busca e exibe os dados do usuário.
+         */
+        async function carregarDadosUsuario(userId) {
+            if (!userId) {
+                document.body.innerHTML = "<h1>Erro: Nenhum usuário logado.</h1>";
+                return;
+            }
+
+            const docRef = doc(db, "usuarios", userId);
+            const docSnap = await getDoc(docRef);
+
+            if (docSnap.exists()) {
+                const dados = docSnap.data();
+                
+                // Preenche o header
+                document.getElementById('nome-usuario').textContent = dados.nomeCompleto;
+                const iniciais = dados.nomeCompleto.charAt(0);
+                document.getElementById('avatar-usuario').src = `https://placehold.co/100x100/fef08a/422006?text=${iniciais}`;
+
+                // Preenche a gamificação
+                document.getElementById('pontos-usuario').textContent = dados.pontos || 0;
+                
+                const galeria = document.getElementById('galeria-medalhas');
+                galeria.innerHTML = '';
+                const medalhas = dados.medalhas || [];
+                if (medalhas.length > 0) {
+                    medalhas.forEach(medalha => {
+                        const divMedalha = document.createElement('div');
+                        divMedalha.className = 'medalha';
+                        divMedalha.title = medalha.titulo; // Supondo que o admin adicione um título
+                        divMedalha.textContent = medalha.icone; // Supondo que o admin defina um ícone
+                        galeria.appendChild(divMedalha);
+                    });
+                } else {
+                    galeria.innerHTML = '<p style="font-size: 0.9rem; color: #6b7280;">Nenhuma medalha ainda.</p>';
+                }
+
+            } else {
+                console.log("Nenhum documento encontrado para este usuário!");
+                document.body.innerHTML = "<h1>Erro: Usuário não encontrado.</h1>";
+            }
+        }
+
+        /**
+         * Ouve e exibe os recados do mural em tempo real.
+         */
+        function carregarMuralRecados() {
+            const q = query(collection(db, "mural"));
+            const muralDiv = document.getElementById('mural-recados');
+            
+            onSnapshot(q, (querySnapshot) => {
+                if (querySnapshot.empty) {
+                    muralDiv.innerHTML = '<p>Nenhum recado no mural por enquanto.</p>';
+                    return;
+                }
+                
+                muralDiv.innerHTML = ''; // Limpa antes de adicionar
+                querySnapshot.forEach((doc) => {
+                    const recado = doc.data();
+                    const itemRecado = document.createElement('div');
+                    itemRecado.className = 'item-recado';
+                    
+                    const dataFormatada = new Date(recado.criadoEm.seconds * 1000).toLocaleDateString('pt-BR');
+
+                    itemRecado.innerHTML = `
+                        <h3>${recado.titulo}</h3>
+                        <p>${recado.mensagem}</p>
+                        <span class="data-recado">Postado em: ${dataFormatada}</span>
+                    `;
+                    muralDiv.appendChild(itemRecado);
+                });
+            });
+        }
+
+        // --- Inicialização ---
+        const usuarioId = obterIdUsuarioLogado();
+        carregarDadosUsuario(usuarioId);
+        carregarMuralRecados();
+
+    </script>
+</body>
+</html>

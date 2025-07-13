@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro - Escola Infantil Futuro</title>
+    
+    <!-- Link para o arquivo CSS externo -->
+    <link rel="stylesheet" href="cadastro.css">
+    
+    <!-- Google Fonts: Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="container-cadastro">
+        
+        <!-- Seção do Formulário -->
+        <div class="coluna coluna-formulario">
+            <h1 class="titulo">Crie sua Conta</h1>
+            <p class="subtitulo">Preencha seus dados e prepare-se para o reconhecimento facial.</p>
+            
+            <form id="formulario-cadastro">
+                <div class="grupo-formulario">
+                    <label for="nomeCompleto">Nome Completo</label>
+                    <input type="text" id="nomeCompleto" class="campo-input" required>
+                </div>
+                <div class="grupo-formulario">
+                    <label for="cpf">CPF</label>
+                    <input type="text" id="cpf" class="campo-input" required placeholder="000.000.000-00">
+                </div>
+                <div class="grupo-formulario">
+                    <label for="dataNascimento">Data de Nascimento</label>
+                    <input type="date" id="dataNascimento" class="campo-input" required>
+                </div>
+                 <div class="grupo-formulario">
+                    <label for="perfil">Perfil</label>
+                    <select id="perfil" class="campo-input" required>
+                        <option value="aluno">Aluno(a)</option>
+                        <option value="professor">Professor(a)</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+
+        <!-- Seção do Treinamento Facial -->
+        <div class="coluna coluna-facial">
+            <h2 class="titulo-facial">Treinamento Facial</h2>
+            
+            <div class="container-video">
+                <video id="webcam" autoplay playsinline muted></video>
+                <p id="placeholder-webcam">Clique em "Iniciar" para ligar a câmera</p>
+            </div>
+            
+            <div id="area-mensagem"></div>
+
+            <div class="barra-progresso-fundo">
+                <div id="barra-progresso"></div>
+            </div>
+
+            <div id="galeria-miniaturas"></div>
+
+            <button id="btn-iniciar-captura" class="botao botao-amarelo">
+                Iniciar Captura Facial
+            </button>
+            
+            <button id="btn-enviar-cadastro" class="botao botao-verde hidden">
+                Finalizar Cadastro
+            </button>
+        </div>
+    </div>
+
+    <!-- Canvas oculto para captura de frames -->
+    <canvas id="canvas" class="hidden"></canvas>
+
+    <!-- Biblioteca face-api.js -->
+    <script src="face-api.min.js"></script>
+
+    <script type="module">
+        // Importações do Firebase SDK
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Objeto de configuração do Firebase
+        const firebaseConfig = {
+        apiKey: "AIzaSyC4zPjmPTdPzljTObWh11F3P2pqTBz8wjQ",
+        authDomain: "escolia.firebaseapp.com",
+        projectId: "escolia",
+        storageBucket: "escolia.firebasestorage.app",
+        messagingSenderId: "31543189526",
+        appId: "1:31543189526:web:04716a986a3625cbfb5537",
+        measurementId: "G-VPQLEY7XBM"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+
+        // --- Elementos do DOM ---
+        const videoWebcam = document.getElementById('webcam');
+        const placeholderWebcam = document.getElementById('placeholder-webcam');
+        const btnIniciarCaptura = document.getElementById('btn-iniciar-captura');
+        const btnEnviarCadastro = document.getElementById('btn-enviar-cadastro');
+        const areaMensagem = document.getElementById('area-mensagem');
+        const barraProgresso = document.getElementById('barra-progresso');
+        const galeriaMiniaturas = document.getElementById('galeria-miniaturas');
+        const canvas = document.getElementById('canvas');
+        const formulario = document.getElementById('formulario-cadastro');
+
+        // --- Variáveis de Estado ---
+        let imagensCapturadas = [];
+        const TOTAL_IMAGENS = 10;
+        let modoSimulacao = false;
+        let cameraIniciada = false;
+
+        // --- Funções ---
+        
+        function ativarModoSimulacao(motivo) {
+            modoSimulacao = true;
+            placeholderWebcam.textContent = 'MODO DE SIMULAÇÃO';
+            videoWebcam.classList.add('hidden');
+            areaMensagem.innerHTML = `${motivo} <br> **Modo de simulação ativado.**`;
+            return true; // Indica que o modo de simulação está pronto
+        }
+
+        async function configurarWebcam() {
+            if (cameraIniciada) return true;
+
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                return ativarModoSimulacao("Seu navegador não suporta acesso à câmera.");
+            }
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                videoWebcam.srcObject = stream;
+                placeholderWebcam.classList.add('hidden');
+                videoWebcam.addEventListener('loadedmetadata', () => videoWebcam.play());
+                cameraIniciada = true;
+                return true;
+            } catch (err) {
+                if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
+                    return ativarModoSimulacao("Nenhuma câmera foi encontrada.");
+                } else if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+                    areaMensagem.innerHTML = "Acesso à câmera negado. Habilite a permissão nas configurações do navegador.";
+                    return false;
+                } else {
+                    return ativarModoSimulacao("Ocorreu um erro ao acessar a câmera.");
+                }
+            }
+        }
+
+        function capturarImagem() {
+            const contexto = canvas.getContext('2d');
+            canvas.width = 320;
+            canvas.height = 240;
+
+            if (modoSimulacao) {
+                const cores = ['#fde68a', '#fca5a5', '#86efac', '#93c5fd', '#c4b5fd'];
+                contexto.fillStyle = cores[imagensCapturadas.length % cores.length];
+                contexto.fillRect(0, 0, canvas.width, canvas.height);
+                contexto.fillStyle = '#374151';
+                contexto.font = 'bold 30px Poppins';
+                contexto.textAlign = 'center';
+                contexto.textBaseline = 'middle';
+                contexto.fillText(`IMG ${imagensCapturadas.length + 1}`, canvas.width / 2, canvas.height / 2);
+            } else {
+                contexto.translate(canvas.width, 0);
+                contexto.scale(-1, 1);
+                contexto.drawImage(videoWebcam, 0, 0, canvas.width, canvas.height);
+            }
+            
+            const urlDadosImagem = canvas.toDataURL('image/jpeg');
+            imagensCapturadas.push(urlDadosImagem);
+
+            const img = document.createElement('img');
+            img.src = urlDadosImagem;
+            img.className = 'miniatura';
+            galeriaMiniaturas.appendChild(img);
+        }
+
+        async function iniciarCaptura() {
+            if (!formulario.checkValidity()) {
+                areaMensagem.textContent = 'Por favor, preencha todos os dados primeiro.';
+                formulario.reportValidity();
+                return;
+            }
+            
+            areaMensagem.textContent = 'Iniciando câmera...';
+            const cameraPronta = await configurarWebcam();
+            if (!cameraPronta) {
+                // A mensagem de erro já foi definida em configurarWebcam
+                return;
+            }
+
+            btnIniciarCaptura.disabled = true;
+            areaMensagem.textContent = 'Prepare-se...';
+            
+            let imagensTiradas = 0;
+            const intervalo = setInterval(() => {
+                if (imagensTiradas < TOTAL_IMAGENS) {
+                    areaMensagem.textContent = `Capturando imagem ${imagensTiradas + 1} de ${TOTAL_IMAGENS}...`;
+                    capturarImagem();
+                    imagensTiradas++;
+                    barraProgresso.style.width = `${(imagensTiradas / TOTAL_IMAGENS) * 100}%`;
+                } else {
+                    clearInterval(intervalo);
+                    capturaCompleta();
+                }
+            }, 500);
+        }
+
+        function capturaCompleta() {
+            areaMensagem.textContent = 'Captura facial concluída!';
+            btnIniciarCaptura.classList.add('hidden');
+            btnEnviarCadastro.classList.remove('hidden');
+        }
+
+        async function carregarModelosFaceAPI() {
+            const URL_MODELOS = './models';
+            areaMensagem.textContent = 'Carregando inteligência artificial...';
+            await Promise.all([
+                faceapi.nets.tinyFaceDetector.loadFromUri(URL_MODELOS),
+                faceapi.nets.faceLandmark68Net.loadFromUri(URL_MODELOS),
+                faceapi.nets.faceRecognitionNet.loadFromUri(URL_MODELOS)
+            ]);
+        }
+
+        async function enviarCadastro() {
+            btnEnviarCadastro.disabled = true;
+            btnEnviarCadastro.textContent = 'Processando...';
+            
+            let descritorFinal = null;
+
+            try {
+                if (!modoSimulacao) {
+                    await carregarModelosFaceAPI();
+                    areaMensagem.textContent = 'Analisando suas fotos, aguarde...';
+
+                    const descritoresFaciais = [];
+                    for (let i = 0; i < imagensCapturadas.length; i++) {
+                        const img = await faceapi.fetchImage(imagensCapturadas[i]);
+                        const deteccoes = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+                        if (deteccoes) {
+                            descritoresFaciais.push(Array.from(deteccoes.descriptor));
+                        }
+                        areaMensagem.textContent = `Analisando foto ${i + 1}/${TOTAL_IMAGENS}...`;
+                    }
+
+                    if (descritoresFaciais.length < 5) {
+                        throw new Error('Não foi possível detectar um rosto claro na maioria das fotos. Tente novamente.');
+                    }
+                    descritorFinal = descritoresFaciais[0];
+                } else {
+                    areaMensagem.textContent = 'Salvando dados em modo de simulação...';
+                    descritorFinal = Array(128).fill(0.1);
+                }
+                
+                areaMensagem.textContent = 'Salvando seus dados...';
+
+                const dadosFormulario = {
+                    nomeCompleto: document.getElementById('nomeCompleto').value,
+                    cpf: document.getElementById('cpf').value,
+                    dataNascimento: document.getElementById('dataNascimento').value,
+                    perfil: document.getElementById('perfil').value,
+                    status: 'pending',
+                    criadoEm: new Date().toISOString(),
+                    descritorFacial: descritorFinal 
+                };
+
+                await addDoc(collection(db, "usuarios"), dadosFormulario);
+                
+                document.body.innerHTML = `
+                    <div class="card-sucesso">
+                        <h1>Cadastro Enviado!</h1>
+                        <p>Seu cadastro foi enviado com sucesso para a escola.</p>
+                    </div>
+                `;
+
+            } catch (error) {
+                console.error("Erro no processo de cadastro: ", error);
+                areaMensagem.textContent = error.message || 'Erro ao enviar cadastro. Tente novamente.';
+                btnEnviarCadastro.disabled = false;
+                btnEnviarCadastro.textContent = 'Finalizar Cadastro';
+            }
+        }
+
+        // --- Event Listeners ---
+        btnIniciarCaptura.addEventListener('click', iniciarCaptura);
+        btnEnviarCadastro.addEventListener('click', enviarCadastro);
+
+    </script>
+</body>
+</html>

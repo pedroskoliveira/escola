@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escola Infantil Futuro - Onde o aprendizado floresce</title>
+    
+    <!-- Link para o arquivo CSS externo -->
+    <link rel="stylesheet" href="estilo.css">
+
+    <!-- Google Fonts: Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Ícones (Ionicons) -->
+    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="header">
+        <nav class="navbar">
+            <a href="#" class="logo">Escola Futuro</a>
+            <div class="menu-desktop">
+                <a href="#sobre">Sobre Nós</a>
+                <a href="#proposta">Proposta</a>
+                <a href="cadastro.html">Matrículas</a>
+                <a href="login_facial.html" class="btn-amarelo">Área do Aluno</a>
+            </div>
+            <button id="btn-mobile" class="menu-mobile-btn">
+                <ion-icon name="menu-outline"></ion-icon>
+            </button>
+        </nav>
+        <div id="menu-mobile-itens" class="menu-mobile-itens hidden">
+            <a href="#sobre">Sobre Nós</a>
+            <a href="#proposta">Proposta</a>
+            <a href="cadastro.html">Matrículas</a>
+            <a href="login_facial.html">Área do Aluno</a>
+        </div>
+    </header>
+
+    <!-- Seção Hero -->
+    <section class="hero">
+        <div class="hero-conteudo">
+            <h1>Bem-vindos à Escola Infantil Futuro!</h1>
+            <p>Um lugar mágico onde cada criança descobre o prazer de aprender e crescer.</p>
+            <a href="/cadastro.html" class="btn-branco">Agende uma Visita</a>
+        </div>
+    </section>
+
+    <!-- Seção Sobre -->
+    <section id="sobre" class="secao">
+        <h2 class="titulo-secao">Sobre Nossa Escola</h2>
+        <div class="container-sobre">
+            <div class="sobre-imagem">
+                <img src="https://placehold.co/600x400/d1fae5/10b981?text=Sala+de+Aula" alt="Sala de aula colorida">
+            </div>
+            <div class="sobre-texto">
+                <h3>Nossa Missão</h3>
+                <p>Oferecer um ambiente seguro, estimulante e acolhedor, onde as crianças possam desenvolver suas habilidades sociais, emocionais e cognitivas através de atividades lúdicas e do contato com a natureza.</p>
+                <h3>Nossa Visão</h3>
+                <p>Ser uma referência em educação infantil, formando cidadãos criativos, críticos e felizes, preparados para os desafios do futuro.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Rodapé -->
+    <footer class="rodape">
+        <p>&copy; 2025 Escola Infantil Futuro. Todos os direitos reservados.</p>
+        <p>Rua da Imaginação, 123 - Bairro Feliz, Cidade do Saber</p>
+        
+        <!-- Links de Desenvolvimento -->
+        <div class="links-desenvolvimento">
+            <h4>Acesso Rápido (Desenvolvimento)</h4>
+            <a href="cadastro.html">Página de Cadastro</a>
+            <a href="login_facial.html">Página de Login</a>
+            <a href="dashboard.html">Dashboard do Admin</a>
+            <a href="portal.html">Portal do Aluno</a>
+        </div>
+    </footer>
+
+    <!-- Chatbot -->
+    <div class="container-chatbot">
+        <div id="janela-chat" class="janela-chat hidden">
+            <div class="header-chat">
+                <div class="header-chat-titulo">
+                    <h3>Fale com a nossa IA</h3>
+                    <select id="seletor-ia" class="seletor-ia">
+                        <option value="gemini">Gemini (Padrão)</option>
+                        <option value="claude" disabled>Claude (Em breve)</option>
+                    </select>
+                </div>
+                <button id="btn-fechar-chat">&times;</button>
+            </div>
+            <div id="corpo-chat" class="corpo-chat">
+                <div class="mensagem-bot">
+                    <span>Olá! 👋 Sou a assistente virtual da Escola Futuro. Como posso ajudar?</span>
+                </div>
+            </div>
+            <div class="rodape-chat">
+                <input type="text" id="input-chat" placeholder="Digite sua pergunta...">
+                <button id="btn-enviar-chat">
+                    <ion-icon name="send-outline"></ion-icon>
+                </button>
+            </div>
+        </div>
+        <button id="btn-abrir-chat" class="btn-abrir-chat">
+            <ion-icon name="chatbubbles-outline"></ion-icon>
+        </button>
+    </div>
+
+    <script>
+        // --- Lógica do Menu Mobile ---
+        const btnMobile = document.getElementById('btn-mobile');
+        const menuItens = document.getElementById('menu-mobile-itens');
+        btnMobile.addEventListener('click', () => {
+            menuItens.classList.toggle('hidden');
+        });
+
+        // --- Lógica do Chatbot ---
+        const btnAbrirChat = document.getElementById('btn-abrir-chat');
+        const btnFecharChat = document.getElementById('btn-fechar-chat');
+        const janelaChat = document.getElementById('janela-chat');
+        const corpoChat = document.getElementById('corpo-chat');
+        const inputChat = document.getElementById('input-chat');
+        const btnEnviarChat = document.getElementById('btn-enviar-chat');
+        const seletorIA = document.getElementById('seletor-ia');
+
+        // IMPORTANTE: Substitua pelas suas chaves de API
+        const CHAVES_API = {
+            gemini: "AIzaSyADh6zFbGkMEDZ-A_bOsJ7JCcOXTCSYzjI", // Sua chave de API do Google AI Studio
+            claude: ""  // Sua chave de API da Anthropic (para o futuro)
+        };
+
+        btnAbrirChat.addEventListener('click', () => {
+            janelaChat.classList.remove('hidden');
+            btnAbrirChat.classList.add('hidden');
+        });
+
+        btnFecharChat.addEventListener('click', () => {
+            janelaChat.classList.add('hidden');
+            btnAbrirChat.classList.remove('hidden');
+        });
+
+        const enviarMensagem = async () => {
+            const mensagemUsuario = inputChat.value.trim();
+            if (mensagemUsuario === '') return;
+
+            adicionarMensagemNaTela(mensagemUsuario, 'mensagem-usuario');
+            inputChat.value = '';
+
+            const divDigitando = adicionarMensagemNaTela('Digitando...', 'mensagem-bot digitando');
+            const iaSelecionada = seletorIA.value;
+
+            try {
+                const respostaIA = await obterRespostaDaIA(mensagemUsuario, iaSelecionada);
+                divDigitando.remove();
+                adicionarMensagemNaTela(respostaIA, 'mensagem-bot');
+            } catch (error) {
+                console.error("Erro ao obter resposta da IA:", error);
+                divDigitando.remove();
+                adicionarMensagemNaTela('Desculpe, não consegui me conectar. Tente novamente mais tarde.', 'mensagem-bot');
+            }
+        };
+        
+        function adicionarMensagemNaTela(texto, classe) {
+            const divMensagem = document.createElement('div');
+            divMensagem.className = classe;
+            divMensagem.innerHTML = `<span>${texto}</span>`;
+            corpoChat.appendChild(divMensagem);
+            corpoChat.scrollTop = corpoChat.scrollHeight;
+            return divMensagem;
+        }
+
+        async function obterRespostaDaIA(prompt, provedor) {
+            switch (provedor) {
+                case 'gemini':
+                    return await obterRespostaDoGemini(prompt);
+                case 'claude':
+                    // A lógica para chamar a API do Claude entraria aqui
+                    return "Resposta simulada do Claude: Olá! Como posso te ajudar hoje?";
+                default:
+                    return "Provedor de IA não reconhecido.";
+            }
+        }
+
+        async function obterRespostaDoGemini(prompt) {
+            const apiKey = CHAVES_API.gemini;
+            if (!apiKey) {
+                return "A chave da API do Gemini não foi configurada.";
+            }
+
+            const promptCompleto = `Você é um assistente virtual amigável e engraçado da 'Escola Infantil Futuro'. Responda à seguinte pergunta de forma concisa e útil, os valores são a partir de R$500,00 mensal, as aulas são de segunda à sexta, temos tempo integral, de respostas curtas e diretas, de forma engraçada: "${prompt}"`;
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            
+            const payload = {
+                contents: [{ parts: [{ text: promptCompleto }] }]
+            };
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`Erro na API do Gemini: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            
+            if (result.candidates && result.candidates.length > 0) {
+                return result.candidates[0].content.parts[0].text;
+            } else {
+                return "Não consegui gerar uma resposta no momento.";
+            }
+        }
+
+        btnEnviarChat.addEventListener('click', enviarMensagem);
+        inputChat.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') enviarMensagem();
+        });
+    </script>
+</body>
+</html>
